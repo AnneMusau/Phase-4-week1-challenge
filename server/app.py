@@ -42,14 +42,16 @@ def get_power_by_id(id):
 
 @app.route('/powers/<int:id>', methods=['PATCH'])
 def update_power(id):
-    power = Power.query.get(id)
-    if power:
-        data = request.json
-        if 'description' in data:
-            power["description"] = data['description']
-            return jsonify(power)
-        return jsonify({"errors": ["validation errors"]}), 400
-    return jsonify({"error": "Power not found"}), 404
+    power = Power.query.get_or_404(id)
+    data = request.get_json()
+    if 'description' not in data or not data['description']:
+        return jsonify({"errors":["description is required"]}),400
+    if len (data['description']) < 20:
+        return jsonify({"errors":["description must be at least 20 characters"]}), 400
+    power.description = data['description']
+    db.session.commit()
+    power_dict = power.to_dict()
+    return jsonify(power_dict),200
 
 @app.route('/hero_powers', methods=['POST'])
 def create_hero_power():
